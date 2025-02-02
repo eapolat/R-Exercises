@@ -1,0 +1,277 @@
+---
+title: | 
+  IE 451 Applied Data Analysis \ 
+  Homework 1
+  
+author: Emre Anıl Polat, 22002225 
+date: today
+format: 
+  html:
+    embed-resources: true
+    toc: true
+    number-sections: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+```
+
+```{r}
+#| include: false
+
+# load R packages you need below in this chunk
+library(magrittr)
+library(tidyverse)
+install.packages('ISLR')
+library(ISLR2)
+```
+
+In this homework I tried to use tidyverse utilities as much as possible. I created the graphs using ggplot almost every time.
+
+# ISLR 2e, Exercises 9
+
+```{r}
+head(Auto)
+str(Auto)
+
+```
+
+## a-) Which of the predictors are quantitative, and which are qualitative?
+
+From these values,
+
+Quantitative: mpg, cylinders, displacement, horsepower, weight, acceleration, year
+
+```{r}
+quantitative_indexs <- which(names(Auto) %in% c("mpg", "cylinders" ,"displacement", "horsepower", "weight", "acceleration", "year" ))
+```
+
+
+Qualitative: name, origin
+
+```{r}
+qualitative_indexs <- which(names(Auto) %in% c("name", "origin"))
+```
+
+
+## b-) What is the range of each quantitative predictor? You can answer this using the range() function
+
+```{r}
+sapply(Auto[, quantitative_indexs], range)
+```
+
+
+## c-) What is the mean and standard deviation of each quantitative predictor?
+
+Mean:
+
+```{r}
+sapply(Auto[, quantitative_indexs], mean)
+```
+
+Standard Deviation:
+
+```{r}
+sapply(Auto[, quantitative_indexs], sd)
+```
+
+
+## d-) Now remove the 10th through 85th observations. What is the range, mean, and standard deviation of each predictor in the subset of the data that remains?
+
+Now range without 10-85th observations:
+
+```{r}
+sapply(Auto[-seq(10,85), quantitative_indexs], range)
+```
+
+Mean:
+
+```{r}
+sapply(Auto[-seq(10,85), quantitative_indexs], mean)
+```
+
+Standard Deviation:
+
+```{r}
+sapply(Auto[-seq(10,85), quantitative_indexs], sd)
+```
+
+
+## e-) Using the full data set, investigate the predictors graphically, using scatterplots or other tools of your choice. Create some plots highlighting the relationships among the predictors. Comment on your findings.
+
+To get a general view of the relationships between predictors:
+
+```{r}
+pairs(Auto[, quantitative_indexs], main = "Scatterplot of Predictors")
+```
+
+My comment: Horsepower, Weight, and Displacement are positively correlated with each other, showing that cars with larger engines tend to be heavier and have higher horsepower.Cylinders is reflected in the horizontal lines in some plots, such as against MPG or displacement, indicating that certain values (4, 6, 8 cylinders) are dominant.
+
+To observe the distribution of mpg across different cylinder categories:
+
+```{r}
+ggplot(Auto, aes(x = as.factor(cylinders), y = mpg)) +
+  geom_boxplot() + labs(x = "Number of Cylinders", y = "MPG", title = "MPG by Cylinder Count") + theme_minimal()
+```
+
+My comment: The overall trend suggests that as the number of cylinders increases, fuel efficiency decreases, with 3 and 4-cylinder cars being the most efficient.
+
+To visualize how fuel efficiency (mpg) relates to horsepower:
+
+```{r}
+ggplot(Auto, aes(x = horsepower, y = mpg)) +
+  geom_point() + geom_smooth(method = "lm", color = "blue") +  
+  labs(x = "Horsepower", y = "MPG", title = "MPG vs. Horsepower") +
+  theme_minimal()
+```
+
+My comment: As horsepower increases, MPG decreases, indicating that more powerful cars generally consume more fuel.
+
+
+
+## f-)  Suppose that we wish to predict gas mileage (mpg) on the basis of the other variables. Do your plots suggest that any of the other variables might be useful in predicting mpg? Justify your answer.
+
+The variables horsepower, weight, displacement, and cylinders seem to have the strongest relationships with MPG and could be useful predictors in a model. Year and acceleration may also contribute, but the strength of their relationships with MPG is weaker compared to the other variables.
+
+#  ISLR 2e, Exercise 10
+
+## a-)
+
+```{r}
+library(MASS)
+?Boston
+dim(Boston)
+head(Boston)
+```
+
+How many rows are in this data set? How many columns? What
+do the rows and columns represent?
+
+506 Rows, 14 Columns. 506 housing values in Boston suburbs and 14 features as distance, age etc.
+
+## b-) Make some pairwise scatterplots of the predictors (columns) in this data set. Describe your findings.
+
+```{r}
+pairs(Boston)
+```
+
+Findings: From this scatterplot we can comment as areas with higher crime rates tend to have lower home values, while homes with more rooms generally have higher values. Higher pollution levels are associated with more industrial areas and locations closer to employment centers. Also, newer buildings are often found farther from city centers, as indicated by a slight negative trend between age and dis. These patterns highlight how various factors in the dataset are interconnected. More plots available for next part.
+
+## c-)  Are any of the predictors associated with per capita crime rate? If so, explain the relationship.
+
+```{r}
+ggplot(Boston, aes(x = age, y = crim)) +
+  geom_point() + scale_x_log10() + scale_y_log10() +                        
+  labs(x = "Age", y = "Crime Rate", title = "Crime Rate vs. Age (Log-Log Scale)") + theme_minimal()
+```
+
+So, graph shows that the older homes get, crime rates get higher.
+
+```{r}
+ggplot(Boston, aes(x = dis, y = crim)) +
+  geom_point() + scale_x_log10() + scale_y_log10() +                       
+  labs(x = "Distance to Employment Centers", y = "Crime Rate", title = "Crime Rate vs. Distance (Log-Log Scale)") + theme_minimal()
+```
+
+Also, dis column shows weighted mean of distances to five Boston employment centers and here in graph, homes near to the employment centers has more crime rate. When distance increases, crime rates decrease.
+
+```{r}
+ggplot(Boston, aes(x = tax, y = crim)) +
+  geom_point() + scale_x_log10() +
+  scale_y_log10() + labs(x = "Tax Rate", y = "Crime Rate", title = "Crime Rate vs. Tax Rate (Log-Log Scale)") + theme_minimal()
+```
+
+Here, as tax rates increases, crime rates also increase.
+
+To find the correlations between variables:
+
+```{r}
+cor(Boston)
+```
+
+From these values, shortly we can say that crim, nox, indus, lstat, and rad are positively correlated with each other and generally associated with lower property values and poorer living conditions.
+
+On the other hand rm, dis, zn, and medv tend to be positively correlated with each other, representing higher home values, better living conditions, and more suburban characteristics.
+
+## d-) Do any of the suburbs of Boston appear to have particularly high crime rates? Tax rates? Pupil-teacher ratios? Comment on the range of each predictor.
+
+```{r}
+ggplot(Boston, aes(x = crim)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  labs(x = "Crime Rates", title = "Crime Rates\n (note the long tail)") +
+  theme_minimal()
+
+ggplot(Boston, aes(x = crim)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  coord_cartesian(ylim = c(0, 40)) +
+  labs(x = "Crime Rates", title = "Crime Rates with y-axis limited") +
+  theme_minimal()
+
+ggplot(Boston, aes(x = tax)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  labs(x = "Tax", title = "Tax rates\n (note some high-tax outliers)") +
+  theme_minimal()
+
+ggplot(Boston, aes(x = ptratio)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  labs(x = "pt ratio", title = "Pupil-teacher ratio\n (no real outliers)") +
+  theme_minimal()
+
+```
+
+My comments: Here the plots show that some suburbs in Boston have notably high crime rates, with a few extreme outliers, as indicated by the long tail in the distribution. In terms of tax rates, there are some high-tax outliers, particularly above 600, but the majority of suburbs fall between 200 and 400. 
+
+The pupil-teacher ratio, on the other hand, shows no significant outliers, with most suburbs clustering around a ratio of 18 to 22. The range for crime rates is wide, going up to over 80, while tax rates extend from 200 to nearly 800, and the pupil-teacher ratio is more tightly distributed, ranging between 14 and 22.
+
+## e-) How many of the suburbs in this data set bound the Charles river?
+
+```{r}
+sum(Boston$chas == 1)
+```
+
+
+## f-)What is the median pupil-teacher ratio among the towns in this data set?
+
+```{r}
+median(Boston$ptratio)
+```
+
+
+## g-)  Which suburb of Boston has lowest median value of owneroccupied homes? What are the values of the other predictors for that suburb, and how do those values compare to the overall ranges for those predictors? Comment on your findings.
+
+Lowest median value of owneroccupied homes is 5. And values of the other predictors for that suburb is:
+
+```{r}
+lowest_medv_index <- which.min(Boston$medv)
+
+lowest_medv_suburb <- Boston[lowest_medv_index, ]
+
+print(lowest_medv_suburb)
+
+```
+
+My comment: This area is characterized by a high crime rate and a fully industrialized zone. It also has high pollution levels, aging buildings, and a high tax rate. The pupil-teacher ratio is relatively high, and the proportion of lower-income households is reflected by a lstat value of 30.59. These factors suggest a struggling neighborhood with significant socio-economic challenges.
+
+## h-) In this data set, how many of the suburbs average more than seven rooms per dwelling? More than eight rooms per dwelling? Comment on the suburbs that average more than eight rooms per dwelling.
+
+Count of suburbs more than seven rooms:
+
+```{r}
+sum(Boston$rm > 7)
+```
+
+Count of suburbs more than eight rooms:
+
+```{r}
+sum(Boston$rm > 8)
+```
+
+Now to make a comment on the suburbs that average more than eight rooms per dwelling, I will look the summary of the subset:
+
+```{r}
+summary(subset(Boston, rm > 8))
+```
+
+My comment: The crime rates in these suburbs are relatively low, with a mean of 0.72 and a maximum of 3.47, suggesting safer environments. The homes are older, with an average building age of 71.54%, but the pupil-teacher ratio is favorable, with a mean of 16.36, suggesting better educational resources. Tax rates vary significantly, but the median value of homes is quite high, with a mean of 44.2 and several suburbs reaching the maximum value of 50. This subset represents well-established, higher-income neighborhoods and favorable living conditions.
